@@ -32,6 +32,17 @@ async function run() {
         const result = await ideaVaultCollection.find().toArray()
         res.send(result);
     });
+// get Trending Ideas Section data to use limit
+app.get('/trending-ideas', async (req, res) => {
+    try {
+        
+        const result = await ideaVaultCollection.find().limit(6).toArray();
+        res.send(result);
+    } catch (error) {
+        res.status(500).send({ message: "Failed to fetch trending ideas" });
+    }
+});
+
 
     // post the idea
     app.post("/ideas", async (req, res) => {
