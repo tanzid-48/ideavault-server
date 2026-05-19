@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const app = express();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 const port = process.env.PORT || 5000;
 
@@ -28,21 +28,33 @@ async function run() {
     const ideaVaultCollection = db.collection("ideas");
 
     // get all idea
-    app.get('/ideas',async(req,res)=>{
-        const result = await ideaVaultCollection.find().toArray()
-        res.send(result);
+    app.get("/ideas", async (req, res) => {
+      const result = await ideaVaultCollection.find().toArray();
+      res.send(result);
     });
-// get Trending Ideas Section data to use limit
-app.get('/trending-ideas', async (req, res) => {
-    try {
-        
+    // get Trending Ideas Section data to use limit
+    app.get("/trending-ideas", async (req, res) => {
+      try {
         const result = await ideaVaultCollection.find().limit(6).toArray();
         res.send(result);
-    } catch (error) {
+      } catch (error) {
         res.status(500).send({ message: "Failed to fetch trending ideas" });
-    }
-});
+      }
+    });
 
+    // get a single idea to show details
+    app.get("/ideas/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await ideaVaultCollection.findOne({
+        _id: new ObjectId(id),
+      });
+
+      if (!result) {
+        return res.status(404).json({ message: "Idea not found" });
+      }
+
+      res.json(result);
+    });
 
     // post the idea
     app.post("/ideas", async (req, res) => {
