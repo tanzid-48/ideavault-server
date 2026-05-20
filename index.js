@@ -28,12 +28,34 @@ async function run() {
     const ideaVaultCollection = db.collection("ideas");
     const commentCollection = db.collection("comment");
 
-    // get all idea filter by id
+    // get all idea with search, filter, and dynamic sorting
     app.get("/ideas", async (req, res) => {
-      const { userId } = req.query;
-      const query = userId ? { userId } : {};
-      const result = await ideaVaultCollection.find(query).toArray();
-      res.send(result);
+      try {
+        const { userId, search, category } = req.query;
+        const query = {};
+
+        if (userId) {
+          query.userId = userId;
+        }
+
+        if (search) {
+          query.title = { $regex: search, $options: "i" };
+        }
+
+        if (category && category !== "all") {
+          query.category = { $regex: `^${category}$`, $options: "i" };
+        }
+
+        const result = await ideaVaultCollection
+          .find(query)
+          .sort({ createdAt: -1 })
+          .toArray();
+
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching ideas:", error);
+        res.status(500).send({ message: "Failed to fetch ideas" });
+      }
     });
     // get Trending Ideas Section data to use limit
     app.get("/trending-ideas", async (req, res) => {
