@@ -57,6 +57,25 @@ async function run() {
       res.json(result);
     });
 
+    // DELETE idea
+    app.delete("/ideas/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await ideaVaultCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+    // PATCH (edit) idea
+    app.patch("/ideas/:id", async (req, res) => {
+      const { id } = req.params;
+      const updatedIdea = req.body;
+      const result = await ideaVaultCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updatedIdea },
+      );
+      res.send(result);
+    });
+
     // post the idea
     app.post("/ideas", async (req, res) => {
       const newIdea = req.body;
