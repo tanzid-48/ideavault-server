@@ -28,9 +28,11 @@ async function run() {
     const ideaVaultCollection = db.collection("ideas");
     const commentCollection = db.collection("comment");
 
-    // get all idea
+    // get all idea filter by id
     app.get("/ideas", async (req, res) => {
-      const result = await ideaVaultCollection.find().toArray();
+      const { userId } = req.query;
+      const query = userId ? { userId } : {};
+      const result = await ideaVaultCollection.find(query).toArray();
       res.send(result);
     });
     // get Trending Ideas Section data to use limit
@@ -91,7 +93,9 @@ async function run() {
     });
     // get that the comment
     app.get("/comment", async (req, res) => {
-      const result = await commentCollection.find().toArray();
+      const { userId } = req.query;
+      const query = userId ? { userId } : {};
+      const result = await commentCollection.find(query).toArray();
       res.send(result);
     });
 
