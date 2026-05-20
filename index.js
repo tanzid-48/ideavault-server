@@ -70,18 +70,30 @@ async function run() {
       const result = await commentCollection.insertOne(newComment);
       res.send(result);
     });
-       // get that the comment
+    // get that the comment
     app.get("/comment", async (req, res) => {
       const result = await commentCollection.find().toArray();
       res.send(result);
     });
 
     // DELETE comment
-app.delete("/comment/:id", async (req, res) => {
-  const { id } = req.params;
-  const result = await commentCollection.deleteOne({ _id: new ObjectId(id) });
-  res.send(result);
-});
+    app.delete("/comment/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await commentCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+    // PATCH (edit) comment
+    app.patch("/comment/:id", async (req, res) => {
+      const { id } = req.params;
+      const { text } = req.body;
+      const result = await commentCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { text } },
+      );
+      res.send(result);
+    });
 
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
