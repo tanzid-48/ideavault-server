@@ -180,7 +180,25 @@ async function run() {
       });
       res.send(result);
     });
-    
+    // Unsave idea
+    app.delete("/saved/:ideaId", async (req, res) => {
+      const { ideaId } = req.params;
+      const { userId } = req.query;
+      const result = await savedCollection.deleteOne({ userId, ideaId });
+      res.send(result);
+    });
+
+    // Get saved ideas
+    app.get("/saved", async (req, res) => {
+      const { userId } = req.query;
+      const saved = await savedCollection.find({ userId }).toArray();
+      const ideaIds = saved.map((s) => new ObjectId(s.ideaId));
+      if (ideaIds.length === 0) return res.send([]);
+      const ideas = await ideaVaultCollection
+        .find({ _id: { $in: ideaIds } })
+        .toArray();
+      res.send(ideas);
+    });
 
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
