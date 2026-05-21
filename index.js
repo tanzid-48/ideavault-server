@@ -22,7 +22,9 @@ const client = new MongoClient(uri, {
 });
 
 // Middleware
-const JWKS = createRemoteJWKSet(new URL(`${process.env.DB_PUBLIC}/api/auth/jwks`));
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.DB_PUBLIC}/api/auth/jwks`),
+);
 
 const verifyToken = async (req, res, next) => {
   try {
@@ -52,6 +54,7 @@ async function run() {
     const db = client.db("IdeaVault");
     const ideaVaultCollection = db.collection("ideas");
     const commentCollection = db.collection("comment");
+    const savedCollection = db.collection("saved");
 
     // get all idea with search, filter, and dynamic sorting
     app.get("/ideas", async (req, res) => {
@@ -126,20 +129,20 @@ async function run() {
     });
 
     // post the idea
-    app.post("/ideas",verifyToken, async (req, res) => {
+    app.post("/ideas", verifyToken, async (req, res) => {
       const newIdea = req.body;
       const result = await ideaVaultCollection.insertOne(newIdea);
       res.send(result);
     });
 
     // post the comment
-    app.post("/comment",verifyToken, async (req, res) => {
+    app.post("/comment", verifyToken, async (req, res) => {
       const newComment = req.body;
       const result = await commentCollection.insertOne(newComment);
       res.send(result);
     });
     // get that the comment
-    app.get("/comment",verifyToken,async (req, res) => {
+    app.get("/comment", verifyToken, async (req, res) => {
       const { userId } = req.query;
       const query = userId ? { userId } : {};
       const result = await commentCollection.find(query).toArray();
@@ -165,6 +168,20 @@ async function run() {
       res.send(result);
     });
 
+    // Save idea
+    app.post("/saved", async (req, res) => {
+      const { userId, ideaId } = req.body;
+      const existing = await savedCollection.findOne({ userId, ideaId });
+      if (existing) return res.send({ message: "Already saved" });
+      const result = await savedCollection.insertOne({
+        userId,
+        ideaId,
+        createdAt: new Date(),
+      });
+      res.send(result);
+    });
+    
+
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
@@ -181,5 +198,3 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
-
-
