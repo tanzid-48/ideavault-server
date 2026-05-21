@@ -22,7 +22,7 @@ const client = new MongoClient(uri, {
 });
 
 // Middleware
-const JWKS = createRemoteJWKSet(new URL("http://localhost:3000/api/auth/jwks"));
+const JWKS = createRemoteJWKSet(new URL(`${process.env.DB_PUBLIC}/api/auth/jwks`));
 
 const verifyToken = async (req, res, next) => {
   try {
@@ -126,20 +126,20 @@ async function run() {
     });
 
     // post the idea
-    app.post("/ideas", async (req, res) => {
+    app.post("/ideas",verifyToken, async (req, res) => {
       const newIdea = req.body;
       const result = await ideaVaultCollection.insertOne(newIdea);
       res.send(result);
     });
 
     // post the comment
-    app.post("/comment", async (req, res) => {
+    app.post("/comment",verifyToken, async (req, res) => {
       const newComment = req.body;
       const result = await commentCollection.insertOne(newComment);
       res.send(result);
     });
     // get that the comment
-    app.get("/comment", async (req, res) => {
+    app.get("/comment",verifyToken,async (req, res) => {
       const { userId } = req.query;
       const query = userId ? { userId } : {};
       const result = await commentCollection.find(query).toArray();
