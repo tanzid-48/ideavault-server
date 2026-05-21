@@ -3,6 +3,7 @@ const express = require("express");
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 const port = process.env.PORT || 5000;
 
 // Adds headers: Access-Control-Allow-Origin: *
@@ -19,6 +20,30 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+// Middleware
+const JWKS = createRemoteJWKSet(new URL("http://localhost:3000/api/auth/jwks"));
+
+const verifyToken = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: "unAuthorization" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ message: "unAuthorization" });
+    }
+
+    const { payload } = await jwtVerify(token, JWKS);
+    console.log(payload);
+    next();
+  } catch (error) {
+    console.error(error);
+    return res.status(403).json({ message: "Forbidden" });
+  }
+};
 
 async function run() {
   try {
@@ -68,7 +93,7 @@ async function run() {
     });
 
     // get a single idea to show details
-    app.get("/ideas/:id", async (req, res) => {
+    app.get("/ideas/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const result = await ideaVaultCollection.findOne({
         _id: new ObjectId(id),
